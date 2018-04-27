@@ -52,40 +52,51 @@ public class Task6 {
             put("UInt16", JavaType.JAVA_LANG_INTEGER);
             put("Price", JavaType.JAVA_MATH_BIG_DECIMAL);
         }};
-        Set<String> requiredAttributes = new HashSet<String>(){{
+        /*Set<String> requiredAttributes = new HashSet<String>(){{
             add("IsAdmin");
             add("MessageType");
-        }};
-        Set<String> requiredFields = new HashSet<String>(){{
+        }};*/
+        /*Set<String> requiredFields = new HashSet<String>(){{
             add("UHSequenceNumber");
             add("UHMarketDataGroup");
             add("MessageSequenceNumber");
             add("MessageTime");
-        }};
+        }};*/
 
-        String[] mapping = new String[]{"id", "message", "field", "lengthLSE", "lengthBIT", "lengthTQ", "lengthOB", "type", "Valuename",
-                "valueNameLSE", "valueNameBIT", "valueNameTQ", "valueNameOLS", "defaultValue", "description", "specialRemarksLSE",
-                "specialRemarksBIT", "specialRemarksTQ", "specialRemarksOB", "Exactprocomments"};
         try (ICsvBeanReader csvBeanReader = new CsvBeanReader(new FileReader(args[0]), CsvPreference.STANDARD_PREFERENCE)) {
             CellProcessor[] procs = getProcessors();
             CsvRow row;
             int length = 0;
+            csvBeanReader.getHeader(true);
+            String[] mapping = new String[]{"id", "message", "field", "offsetLSE", "lengthLSE", "offsetBIT", "lengthBIT",
+                    "offsetTQ", "lengthTQ", "offsetOB", "lengthOB", "type", "Valuename", "valueNameLSE", "valueNameBIT",
+                    "valueNameTQ", "valueNameOLS", "defaultValue", "description", "specialRemarksLSE", "specialRemarksBIT",
+                    "specialRemarksTQ", "specialRemarksOB", "Exactprocomments"};
             while ((row = csvBeanReader.read(CsvRow.class, mapping, procs)) != null) {
-                String messagename = row.getMessage().replaceAll(" ", "");
-                Message message = nameToMessage.get(messagename);
-                switch (args[2]){
-                    case "lse": length = row.getLengthlse(); break;
-                    case "bit": length = row.getLengthbit(); break;
-                    case "tq": length = row.getLengthtq(); break;
-                    case "ob": length = row.getLengthob(); break;
-                    default:
-                        System.out.println("Incorrect arguments");
-                        System.exit(1);
-                }
-                if (message == null) {
-                    message = new Message();
-                    message.setName(messagename);
-                    if (!messagename.equals("UnitHeader")) {
+                    String messagename = row.getMessage().replaceAll(" ", "");
+                    Message message = nameToMessage.get(messagename);
+                    switch (args[2]) {
+                        case "lse":
+                            length = row.getLengthlse();
+                            break;
+                        case "bit":
+                            length = row.getLengthbit();
+                            break;
+                        case "tq":
+                            length = row.getLengthtq();
+                            break;
+                        case "ob":
+                            length = row.getLengthob();
+                            break;
+                        default:
+                            System.out.println("Incorrect arguments");
+                            System.exit(1);
+                    }
+                    //length = ProtocolType.parse(args[2]);
+                    if (message == null) {
+                        message = new Message();
+                        message.setName(messagename);
+                    /*if (!messagename.equals("UnitHeader")) {
                         Iterator<String> iterator = requiredFields.iterator();
                         while (iterator.hasNext()) {
                             Field fieldforfields = new Field();
@@ -110,12 +121,12 @@ public class Task6 {
                                 targetDictionary.getFields().getField().add(fieldforfields);
                             }
                         }
+                    }*/
+                        nameToMessage.put(messagename, message);
+                        targetDictionary.getMessages().getMessage().add(message);
                     }
-                    nameToMessage.put(messagename, message);
-                    targetDictionary.getMessages().getMessage().add(message);
-                }
-                JavaType javaType = nameToType.get(row.getType());
-                if (requiredAttributes.contains(row.getField()) && (length == 0)) {
+                    JavaType javaType = nameToType.get(row.getType());
+                /*if (requiredAttributes.contains(row.getField()) && (length == 0)) {
                     Attribute attribute = new Attribute();
                     attribute.setName(row.getField());
                     attribute.setType(javaType);
@@ -123,77 +134,64 @@ public class Task6 {
                     //convertJavaType(javaType, row.getValuename()); // Switch example
                     //javaType.convert(row.getValuename()); // Embedded method example
                     message.getAttribute().add(attribute);
-                } else if (length != 0) {
-                    Field fieldforfields = nameToField.get(row.getField());
-                    Field fieldformessage = new Field();
-                    String fieldname = row.getField().replaceAll(" ", "");
-                    String value = row.getValuename();
-                    if (nameToField.containsKey(row.getField())) {
-                        if (value != null) {
-                            String[] lines = value.split(NEW_LINE_CHARACTER);
-                            for (String line : lines) {
-                                String[] valueRecord = line.split("\\|");
-                                switch (valueRecord.length) {
-                                      case 1:
-                                          Attribute attribute = new Attribute();
-                                          attribute.setValue(valueRecord[0].trim());
-                                          attribute.setType(javaType);
-                                          fieldformessage.getAttribute().add(attribute);
-                                          break;
-                                      case 2:
-                                          attribute = new Attribute();
-                                          String attributename = valueRecord[1].replaceAll(" ", "");
-                                          attribute.setValue(valueRecord[0].trim());
-                                          attribute.setName(attributename);
-                                          attribute.setType(javaType);
-                                          //convertJavaType(javaType, valueRecord[0]);
-                                          if (!contains(fieldforfields.getValue(), attributename)) {
-                                             fieldforfields.getValue().add(attribute);
-                                          }
+                } else */
+                    if (length != 0) {
+                        Field fieldforfields = nameToField.get(row.getField());
+                        Field fieldformessage = new Field();
+                        String fieldname = row.getField().replaceAll(" ", "");
+                        String value = row.getValuename();
+                        if (nameToField.containsKey(row.getField())) {
+                            if (value != null) {
+                                String[] lines = value.split(NEW_LINE_CHARACTER);
+                                for (String line : lines) {
+                                    String[] valueRecord = line.split("\\|");
+                                    switch (valueRecord.length) {
+                                        case 1:
+                                            fieldformessage.getAttribute().add(getattribute(valueRecord[0].trim(), javaType, ""));
+                                            break;
+                                        case 2:
+                                            String attributename = valueRecord[1].replaceAll(" ", "");
+                                            //convertJavaType(javaType, valueRecord[0]);
+                                            if (!contains(fieldforfields.getValue(), attributename)) {
+                                                fieldforfields.getValue().add(getattribute(valueRecord[0].trim(), javaType, attributename));
+                                            }
+                                            break;
+                                    }
                                 }
+                                getfield(fieldformessage, row.getDefaultvalue(), javaType, fieldname).setReference(fieldforfields);
                             }
-                            fieldformessage.setDefaultvalue(row.getDefaultvalue());
-                            fieldformessage.setType(javaType);
-                            fieldformessage.setName(fieldname);
-                            fieldformessage.setReference(fieldforfields);
+                            fieldformessage.getAttribute().add(getattribute(String.valueOf(length), javaType, "Length"));
+                            fieldformessage.getAttribute().add(getattribute(row.getType(), javaType, "Type"));
+                            message.getField().add(fieldformessage);
+                        } else {
+                            fieldforfields = new Field();
+                            if (value != null) {
+                                String[] lines = value.split(NEW_LINE_CHARACTER);
+                                for (String line : lines) {
+                                    String[] valueRecord = line.split("\\|");
+                                    switch (valueRecord.length) {
+                                        case 1:
+                                            fieldformessage.getAttribute().add(getattribute(valueRecord[0].trim(), javaType, ""));
+                                            break;
+                                        case 2:
+                                            String attributename = valueRecord[1].replaceAll(" ", "");
+                                            //convertJavaType(javaType, valueRecord[0]);
+                                            fieldforfields.getValue().add(getattribute(valueRecord[0].trim(), javaType, attributename));
+                                            break;
+                                    }
+                                }
+                                getfield(fieldforfields, row.getDefaultvalue(), javaType, fieldname).setId("F_" + fieldname);
+                                getfield(fieldformessage, row.getDefaultvalue(), javaType, fieldname).setReference(fieldforfields);
+                                nameToField.put(row.getField(), fieldforfields);
+                                targetDictionary.getFields().getField().add(fieldforfields);
+                            }
+                            else {
+                                fieldformessage = getfield(fieldformessage, row.getDefaultvalue(), javaType, fieldname);
+                            }
+                            fieldformessage.getAttribute().add(getattribute(String.valueOf(length), javaType, "Length"));
+                            fieldformessage.getAttribute().add(getattribute(row.getType(), javaType, "Type"));
                             message.getField().add(fieldformessage);
                         }
-                    } else {
-                        fieldforfields = new Field();
-                        if (value != null) {
-                            String[] lines = value.split(NEW_LINE_CHARACTER);
-                            for (String line : lines) {
-                                String[] valueRecord = line.split("\\|");
-                                switch (valueRecord.length) {
-                                    case 1:
-                                        Attribute attribute = new Attribute();
-                                        attribute.setValue(valueRecord[0].trim());
-                                        attribute.setType(javaType);
-                                        fieldformessage.getAttribute().add(attribute);
-                                        break;
-                                    case 2:
-                                        attribute = new Attribute();
-                                        String attributename = valueRecord[1].replaceAll(" ", "");
-                                        attribute.setValue(valueRecord[0].trim());
-                                        attribute.setName(attributename);
-                                        attribute.setType(javaType);
-                                        //convertJavaType(javaType, valueRecord[0]);
-                                        fieldforfields.getValue().add(attribute);
-                                }
-                            }
-                            fieldforfields.setDefaultvalue(row.getDefaultvalue());
-                            fieldforfields.setType(javaType);
-                            fieldforfields.setName(fieldname);
-                            fieldforfields.setId("F_" + fieldname);
-                            fieldformessage.setDefaultvalue(row.getDefaultvalue());
-                            fieldformessage.setType(javaType);
-                            fieldformessage.setName(fieldname);
-                            fieldformessage.setReference(fieldforfields);
-                            message.getField().add(fieldformessage);
-                            nameToField.put(row.getField(), fieldforfields);
-                            if (value.split("\\|").length > 1) targetDictionary.getFields().getField().add(fieldforfields);
-                        }
-                    }
                 }
             }
         }
@@ -246,11 +244,30 @@ public class Task6 {
         return false;
     }
 
+    private static Attribute getattribute(String value, JavaType javaType, String name){
+        Attribute attribute = new Attribute();
+        attribute.setValue(value);
+        attribute.setType(javaType);
+        attribute.setName(name);
+        return attribute;
+    }
+
+    private static Field getfield(Field field, String defaultvalue, JavaType javaType, String name){
+        field.setDefaultvalue(defaultvalue);
+        field.setType(javaType);
+        field.setName(name);
+        return field;
+    }
+
     private static CellProcessor[] getProcessors(){
         CellProcessor[] readprocs = new CellProcessor[]{
                 new UniqueHashCode(),
                 new NotNull(),
                 new NotNull(),
+                new Optional(new ParseInt()),
+                new Optional(new ParseInt()),
+                new Optional(new ParseInt()),
+                new Optional(new ParseInt()),
                 new Optional(new ParseInt()),
                 new Optional(new ParseInt()),
                 new Optional(new ParseInt()),
@@ -271,5 +288,50 @@ public class Task6 {
         };
         return readprocs;
     }
+
+    /*private static enum ProtocolType {
+
+        LSE("lse") {
+            @Override
+            public int getLength(CsvRow row) {
+                return row.getLengthlse();
+            }
+        },
+        BIT("bit"){
+            @Override
+            public int getLength(CsvRow row) {
+                return row.getLengthbit();
+            }
+        },
+        TQ("tq"){
+            @Override
+            public int getLength(CsvRow row) {
+                return row.getLengthtq();
+            }
+        },
+        OB("ob") {
+            @Override
+            public int getLength(CsvRow row) {
+                return row.getLengthob();
+            }
+        };
+
+        private final String name;
+        private static CsvRow row;
+
+        private ProtocolType(String name) {
+            this.name = name;
+        }
+
+        public abstract int getLength(CsvRow row);
+
+        public static ProtocolType parse(String name) {
+            for (ProtocolType protocolType : ProtocolType.values()) {
+                if (Objects.equals(protocolType.getLength(row), name)) {
+                    return protocolType;
+                }
+            }
+        }
+    }*/
 
 }
